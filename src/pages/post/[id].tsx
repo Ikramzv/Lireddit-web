@@ -1,19 +1,16 @@
 import { Box, Divider, Heading, Stack } from '@chakra-ui/react'
-import { withUrqlClient } from 'next-urql'
 import { useRouter } from 'next/router'
 import React from 'react'
 import { Layout } from '../../components/Layout'
 import { usePostQuery } from '../../generated/graphql'
-import { createUrqlClient } from '../../utils/createUrqlClient'
 
 const Post: React.FC<{ post: any }> = ({ post }) => { 
     console.log(post)
     const router = useRouter()
-    const [{ data , fetching }] = usePostQuery({
+    const { data , loading } = usePostQuery({
         variables: {id: router.query.id?.toString() as string}
     })
-    console.log(data , fetching)
-    if(fetching) {
+    if(loading) {
         return (
             <Layout variant='regular' >
                 <div>Loading...</div>
@@ -34,4 +31,4 @@ const Post: React.FC<{ post: any }> = ({ post }) => {
     )
 }
 
-export default withUrqlClient(createUrqlClient , { ssr: true })(Post)
+export default Post

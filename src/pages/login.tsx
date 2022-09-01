@@ -1,12 +1,10 @@
 import { Box, Button, Divider, Flex, Heading, Link } from '@chakra-ui/react'
 import { Form, Formik } from 'formik'
-import { withUrqlClient } from 'next-urql'
 import { useRouter } from 'next/router'
-import React, { useEffect } from 'react'
+import React from 'react'
 import InputField from '../components/InputField'
 import Wrapper from '../components/Wrapper'
-import { useLoginMutation, useMeQuery } from '../generated/graphql'
-import { createUrqlClient } from '../utils/createUrqlClient'
+import { MeDocument, MeQuery, useLoginMutation } from '../generated/graphql'
 import { toErrorMap } from '../utils/toErrorMap'
 import { useIfLoggedIn } from '../utils/useIfLoggedIn'
 
@@ -15,7 +13,7 @@ interface loginProps {
 }
 
 const Login: React.FC<loginProps> = ({  }) => { 
-    const [{} , login] = useLoginMutation()
+    const [login , {}] = useLoginMutation()
     const router = useRouter()
     useIfLoggedIn()
     return (
@@ -24,7 +22,12 @@ const Login: React.FC<loginProps> = ({  }) => {
                 <Heading as={'h1'} textAlign='center' color={'teal'} mb={4} >Login</Heading>
                 <Divider my={3} bgColor='black' h={0.2} />
                 <Formik initialValues={{usernameOrEmail: '' , password: '' }} onSubmit={async(values , { setErrors }) => {
-                    const { data }  = await login(values)
+                    const { data }  = await login({variables: values , update: (cache , { data }) => {
+                        cache.writeQuery<MeQuery>({ query: MeDocument , data: {
+                            __typename: 'Query',
+                            me: data?.login.user
+                        } })
+                    }})
                     if(data?.login.errors) {
                         return setErrors(toErrorMap(data?.login.errors))
                     } else if (data?.login.user) {
@@ -61,4 +64,4 @@ const Login: React.FC<loginProps> = ({  }) => {
 
 
 
-export default withUrqlClient(createUrqlClient)(Login);
+export default Login

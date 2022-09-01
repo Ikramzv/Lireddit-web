@@ -1,28 +1,29 @@
 import { DeleteIcon, EditIcon } from "@chakra-ui/icons"
 import { Box, Button, CircularProgress, Divider, Flex, Heading, IconButton, Stack } from "@chakra-ui/react"
-import { withUrqlClient } from "next-urql"
 import NavLink from "next/link"
 import { useRouter } from "next/router"
-import { useState } from "react"
 import { Layout } from "../components/Layout"
 import { UpdootSection } from "../components/UpdootSection"
 import { Post, useDeletePostMutation, useMeQuery, usePostsQuery } from "../generated/graphql"
-import { createUrqlClient } from "../utils/createUrqlClient"
 import { isServer } from "../utils/isServer"
 
 const Index = () => {
-  const [variables, setVariables] = useState({limit: 10 , cursor: null as null | string })
-  const [{} , deletePost] = useDeletePostMutation()
+  const [deletePost , {}] = useDeletePostMutation()
   const router = useRouter()
-  const [{data: userData}] = useMeQuery({
-    pause: isServer(),
+  const {data: userData} = useMeQuery({
+    skip: isServer(),
   })
   const handleClick = (id: Post['id']) => router.push(`/post/${id}`)
   // Posts query always results back before me query. Prevent from this complexity pause the posts query if hasn't existing user .
   // When me query response back then set pause property to false
-  const [{data , fetching}] = usePostsQuery({ variables })
+  const {data , loading , fetchMore , variables , networkStatus } = usePostsQuery({ 
+    variables: { limit: 10 , cursor: null as null | string },
+    notifyOnNetworkStatusChange: true,
+  })
 
-  if(!fetching && !data?.posts.posts) {
+  console.log(networkStatus)
+  
+  if(!loading && !data?.posts.posts) {
     return <div>You have no post yet</div>
   }
   return (
@@ -38,7 +39,7 @@ const Index = () => {
           ) : ''}
         </Flex>
           <Stack wrap={'wrap'} direction='row' gap={5} mt={4} mb={10} justify={'center'} >
-            {fetching && !data?.posts ? (
+            {loading && !data?.posts ? (
               <div>
                 <CircularProgress isIndeterminate color="orange" thickness='15px' />
               </div>
@@ -74,7 +75,12 @@ const Index = () => {
                                 h={8}
                                 colorScheme={'red'} 
                                 _active={{ transform: 'scale(0.6)' , transition: '200ms' }} 
-                                onClick={() => deletePost({ id: p.id })}
+                                onClick={() => deletePost({ 
+                                  variables: { id: p.id } ,
+                                  update: (cache) => {
+                                    cache.evict({ id: `Post:${p.id}` })
+                                  }
+                                })}
                               />
                               <IconButton aria-label="delete post" 
                                 icon={<EditIcon />} 
@@ -100,7 +106,14 @@ const Index = () => {
           </Stack>
           {data?.posts && data.posts.hasMore && (
             <Flex justify={'center'} >
-              <Button onClick={() => setVariables({limit: variables.limit , cursor: data.posts.posts[data.posts.posts.length - 1]?.createdAt})} my={8} >Load More</Button>
+              <Button onClick={() => {
+                fetchMore({ 
+                  variables: {
+                    limit: variables?.limit ,
+                    cursor: data.posts.posts[data.posts.posts.length - 1]?.createdAt
+                  }
+                })
+              }} my={8} >Load More</Button>
             </Flex>
           )}
       </Flex>
@@ -108,4 +121,4 @@ const Index = () => {
   )
 }
 
-export default withUrqlClient(createUrqlClient , { ssr: true })(Index)
+export default Index

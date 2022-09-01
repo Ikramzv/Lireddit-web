@@ -7,6 +7,7 @@
     "gen": "graphql-codegen --config codegen.yml"
   },
   "dependencies": {
+    "@apollo/client": "^3.6.9",
     "@chakra-ui/icons": "^2.0.2",
     "@chakra-ui/react": "^2.2.1",
     "@chakra-ui/theme-tools": "^2.0.2",
@@ -28,6 +29,7 @@
     "@graphql-codegen/cli": "2.11.6",
     "@graphql-codegen/typescript": "2.7.3",
     "@graphql-codegen/typescript-operations": "2.5.3",
+    "@graphql-codegen/typescript-react-apollo": "^3.3.3",
     "@graphql-codegen/typescript-urql": "^3.6.4",
     "@types/node": "^18.0.0",
     "@types/react": "^18.0.0",

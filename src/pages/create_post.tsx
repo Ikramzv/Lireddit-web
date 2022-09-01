@@ -1,47 +1,48 @@
+import { useApolloClient } from "@apollo/client";
 import { Button, Flex } from "@chakra-ui/react";
 import { Form, Formik } from "formik";
-import { withUrqlClient } from "next-urql";
+import { useRouter } from "next/router";
 import React from "react";
 import InputField from "../components/InputField";
-import { useCreatePostMutation } from "../generated/graphql";
-import { createUrqlClient } from "../utils/createUrqlClient";
 import { Layout } from "../components/Layout";
+import { useCreatePostMutation } from "../generated/graphql";
 import { useIsAuth } from "../utils/useIsAuth";
-import { useRouter } from "next/router";
 
 const CreatePost: React.FC<{}> = ({}) => {
-    const [{} , createPost] = useCreatePostMutation()
+    const [createPost] = useCreatePostMutation()
     const router = useRouter()
+    const apolloClient = useApolloClient()
     useIsAuth()
     
     return (
         <Layout variant="small" >
-            <Formik initialValues={{ title: '' , text: '' }} onSubmit={async(values , { setValues, setErrors }) => {
-                const { error } = await createPost({input: values})
-                const fixedErrorMsg = error?.message.split('[GraphQL] ')[1]
-                if(!error) {
-                    router.push('/')
-                    return setValues({title: '' , text: ''})
+            <Formik initialValues={{ title: '' , text: '' }} onSubmit={async(values , { setErrors , setValues }) => {
+                const { data } = await createPost({variables: { input: values } , onError: (error) => {
+                    const fixedErrorMsg = error.message
+                    if(fixedErrorMsg?.includes('must be fulfilled')) {
+                        if(fixedErrorMsg?.includes('and')) {
+                            setErrors({
+                                title: fixedErrorMsg,
+                                text: fixedErrorMsg
+                            })
+                        } else if(fixedErrorMsg?.includes('text')) {
+                            setErrors({
+                                title: '',
+                                text: fixedErrorMsg
+                            })
+                        } else if (fixedErrorMsg.includes('title')) {
+                            setErrors({
+                                title: fixedErrorMsg,
+                                text: ''
+                            })
+                        }
+                }}})
+                if(data) {
+                    apolloClient.cache.reset()
+                    return router.push('/')
                 }
-                if(fixedErrorMsg?.includes('must be fulfilled')) {
-                    if(fixedErrorMsg?.includes('and')) {
-                        setErrors({
-                            title: fixedErrorMsg,
-                            text: fixedErrorMsg
-                        })
-                    } else if(fixedErrorMsg?.includes('text')) {
-                        setErrors({
-                            title: '',
-                            text: fixedErrorMsg
-                        })
-                    } else if (fixedErrorMsg.includes('title')) {
-                        setErrors({
-                            title: fixedErrorMsg,
-                            text: ''
-                        })
-                    }
-                    return
-                }
+
+                return
             }} >
                 {({isSubmitting}) => (
                     <Form>
@@ -57,4 +58,4 @@ const CreatePost: React.FC<{}> = ({}) => {
     )
 }
 
-export default withUrqlClient(createUrqlClient)(CreatePost);
+export default CreatePost

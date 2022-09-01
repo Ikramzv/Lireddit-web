@@ -1,19 +1,17 @@
-import { Alert, AlertIcon, Button, Flex, Heading, Link  } from '@chakra-ui/react';
+import { Alert, AlertIcon, Button, Flex, Heading, Link } from '@chakra-ui/react';
 import { Form, Formik } from 'formik';
 import { NextPage } from 'next';
+import NavLink from 'next/link';
+import { useRouter } from 'next/router';
+import { useEffect, useState } from 'react';
 import InputField from '../../components/InputField';
 import Wrapper from '../../components/Wrapper';
-import { useChangePasswordMutation } from '../../generated/graphql';
+import { MeDocument, MeQuery, useChangePasswordMutation } from '../../generated/graphql';
 import { toErrorMap } from '../../utils/toErrorMap';
-import { useRouter } from 'next/router' 
-import { withUrqlClient } from 'next-urql';
-import { createUrqlClient } from '../../utils/createUrqlClient';
-import { useEffect, useState } from 'react';
-import NavLink from 'next/link';
 
 
 export const ChangePassword: NextPage = ({  }) => { 
-    const [{} , changePassword] = useChangePasswordMutation()
+    const [changePassword , {}] = useChangePasswordMutation()
     const router = useRouter()
     const [tokenErr, setTokenErr] = useState('')
     useEffect(() => {
@@ -27,8 +25,16 @@ export const ChangePassword: NextPage = ({  }) => {
         <Wrapper variant="small" >
             <Formik initialValues={{newPassword: '' , confirmPassword: ''}} onSubmit={async(values , {setErrors , setFieldError}) => {
                 const response = await changePassword({
-                    token: typeof router.query.token === 'string' ? router.query.token : '' , 
-                    newPassword: values.newPassword
+                    variables: {
+                        token: typeof router.query.token === 'string' ? router.query.token : '' , 
+                        newPassword: values.newPassword
+                    },
+                    update: (cache , { data }) => {
+                        cache.writeQuery<MeQuery>({ query: MeDocument , data: {
+                            __typename: 'Query',
+                            me: data?.changePassword.user
+                        } })
+                    }
                 })
                 if(values.newPassword !== values.confirmPassword) {
                     return setFieldError('confirmPassword' , 'Must be equal to new password')
@@ -68,4 +74,4 @@ export const ChangePassword: NextPage = ({  }) => {
     );
 }
 
-export default withUrqlClient(createUrqlClient)(ChangePassword)
+export default ChangePassword

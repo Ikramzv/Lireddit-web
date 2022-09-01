@@ -1,3 +1,4 @@
+import { useApolloClient } from '@apollo/client';
 import { Box, Button, Flex, Heading, Link } from '@chakra-ui/react';
 import NextLink from 'next/link';
 import { useRouter } from 'next/router';
@@ -10,15 +11,16 @@ interface NavbarProps {
 }
 
 const Navbar: React.FC<NavbarProps | any> = ({ }) => { 
-    const [{ data , fetching }] = useMeQuery({
-        pause: isServer() ,
+    const { data , loading } = useMeQuery({
+        skip: isServer() ,
     })
-    const [{ fetching: logoutFetching } , logout] = useLogoutMutation()
+    const [logout ,{ loading: logoutFetching }] = useLogoutMutation()
+    const apolloClient = useApolloClient()
     const router = useRouter()
     let body = null
     // If data is not undefined render the followings
     if(typeof data !== "undefined") {
-        if(fetching) {
+        if(loading) {
             // data is loading
             body = 'Fetching ...'
         } else if (!data?.me) {
@@ -34,9 +36,9 @@ const Navbar: React.FC<NavbarProps | any> = ({ }) => {
             body = (
                 <Flex display={'flex'} align={'center'} gap={4} >
                     <Heading as={'h2'} fontSize={'17px'} >{data?.me.username}</Heading>
-                    <Button variant={'outline'} isLoading={logoutFetching} onClick={() => {
-                        logout()
-                        router.reload()
+                    <Button variant={'outline'} isLoading={logoutFetching} onClick={async() => {
+                        await logout()
+                        await apolloClient.cache.reset()
                     }} >Logout</Button>
                 </Flex>
             )
