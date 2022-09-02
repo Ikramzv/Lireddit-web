@@ -19,6 +19,8 @@ const Index = () => {
   const {data , loading , fetchMore , variables , networkStatus } = usePostsQuery({ 
     variables: { limit: 10 , cursor: null as null | string },
     notifyOnNetworkStatusChange: true,
+    fetchPolicy: 'cache-first',
+    returnPartialData: true
   })
   
   console.log(networkStatus)

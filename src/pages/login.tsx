@@ -13,7 +13,7 @@ interface loginProps {
 }
 
 const Login: React.FC<loginProps> = ({  }) => { 
-    const [login , {}] = useLoginMutation()
+    const [login , {  }] = useLoginMutation({})
     const router = useRouter()
     useIfLoggedIn()
     return (

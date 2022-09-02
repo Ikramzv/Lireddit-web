@@ -25,7 +25,7 @@ function updateAfterVote(value: number , cache: ApolloCache<VoteMutation> , post
         }
         const newPoints = data.points as number + (!data.voteStatus ? 1 : 2) * value
         cache.writeFragment({ id: `Post:${postId}` , fragment: gql`
-            fragment _ on Post {
+            fragment __ on Post {
                 voteStatus
                 points
             }            
