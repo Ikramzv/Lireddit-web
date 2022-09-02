@@ -29,13 +29,15 @@ const client = new ApolloClient({
   cache,
   queryDeduplication: true,
   link: ApolloLink.from([
-    onError(({ graphQLErrors , networkError }) => {
+    onError(({ graphQLErrors , networkError , forward }) => {
         if(networkError) {
           return console.log(networkError.message)
         }
         if(graphQLErrors) {
-          if (graphQLErrors.some(err => err.message === 'not authenticated')) Router.replace('/login')
-          return
+          if (graphQLErrors.some(err => err.message === 'not authenticated')) {
+            Router.replace('/login')
+            return
+          }
         }
     }),
     new HttpLink({ uri: 'http://localhost:4000/graphql' , credentials: 'include' })

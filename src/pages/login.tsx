@@ -23,6 +23,7 @@ const Login: React.FC<loginProps> = ({  }) => {
                 <Divider my={3} bgColor='black' h={0.2} />
                 <Formik initialValues={{usernameOrEmail: '' , password: '' }} onSubmit={async(values , { setErrors }) => {
                     const { data }  = await login({variables: values , update: (cache , { data }) => {
+                        cache.evict({ fieldName: 'posts' })
                         cache.writeQuery<MeQuery>({ query: MeDocument , data: {
                             __typename: 'Query',
                             me: data?.login.user

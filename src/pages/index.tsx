@@ -20,7 +20,7 @@ const Index = () => {
     variables: { limit: 10 , cursor: null as null | string },
     notifyOnNetworkStatusChange: true,
   })
-
+  
   console.log(networkStatus)
   
   if(!loading && !data?.posts.posts) {
